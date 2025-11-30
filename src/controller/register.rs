@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use axum::{Json, extract::State, http::StatusCode};
+use tracing::info_span;
 
 use crate::{
     business::{app_state::AppState, server::Server},
@@ -11,6 +12,8 @@ pub async fn register_endpoint_controller(
     State(app_state): State<Arc<AppState>>,
     Json(registration_request): Json<RegistrationRequest>,
 ) -> StatusCode {
+    let _entered = info_span!("[Controller: Register Endpoint]").entered();
+
     let port = registration_request.port.to_string();
 
     let server = Server::register_route(&app_state, registration_request);

@@ -7,9 +7,11 @@ use axum::{
 };
 use serde_json::Value;
 use tokio::{net::TcpListener, task::JoinHandle};
+use tracing::info;
 
 use crate::{
     business::app_state::AppState,
+    logging::http_trace::HttpTracingMiddleware,
     model::{http_method::HttpMethod, request::registration_request::RegistrationRequest},
 };
 
@@ -27,11 +29,19 @@ impl RequestIdentifier {
 
 pub struct Server {
     connection: JoinHandle<()>,
+    port: String,
     data: HashMap<RequestIdentifier, Value>,
 }
 
 impl Server {
     pub fn register_route(app_state: &AppState, registration_request: RegistrationRequest) -> Self {
+        info!(
+            "Registering route [{} (@{})] {}.",
+            registration_request.method.to_string(),
+            &registration_request.port,
+            &registration_request.path,
+        );
+
         let RegistrationRequest {
             port,
             path,
@@ -47,14 +57,19 @@ impl Server {
             .unwrap_or(HashMap::new());
         data.insert(request_identifier, response);
 
-        let connection = Server::connect(&port, &data);
+        let connection = Server::connect(port.clone(), &data);
 
-        Self { connection, data }
+        Self {
+            connection,
+            port,
+            data,
+        }
     }
 
-    fn connect(port: &str, data: &HashMap<RequestIdentifier, Value>) -> JoinHandle<()> {
-        let router = Server::create_router(data);
-        let port = port.to_string();
+    fn connect(port: String, data: &HashMap<RequestIdentifier, Value>) -> JoinHandle<()> {
+        info!("Updating connection on port {}.", &port);
+
+        let router = Server::create_router(port.clone(), data);
 
         tokio::spawn(async move {
             let listener = TcpListener::bind(format!("0.0.0.0:{}", port))
@@ -65,7 +80,7 @@ impl Server {
         })
     }
 
-    fn create_router(data: &HashMap<RequestIdentifier, Value>) -> Router {
+    fn create_router(port: String, data: &HashMap<RequestIdentifier, Value>) -> Router {
         let mut router = Router::new();
 
         for (request_identifier, response) in data {
@@ -82,7 +97,7 @@ impl Server {
             router = router.route(&request_identifier.path, method_router)
         }
 
-        router
+        router.with_http_tracing(port)
     }
 
     pub fn stop(&self) {
@@ -90,6 +105,11 @@ impl Server {
     }
 
     pub fn get_registration_info(&self) -> Vec<String> {
+        info!(
+            "Collection information about registrations at server on port {}.",
+            &self.port
+        );
+
         let mut registrations = vec![];
 
         for (identifier, _) in &self.data {
