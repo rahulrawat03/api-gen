@@ -7,9 +7,13 @@ use axum::{
 };
 use tokio::net::TcpListener;
 
-use crate::{app_state::AppState, controller::register::register_endpoint_controller};
+use crate::{
+    business::app_state::AppState,
+    controller::{
+        register::register_endpoint_controller, registrations::list_all_registrations_controller,
+    },
+};
 
-mod app_state;
 mod business;
 mod controller;
 mod model;
@@ -22,6 +26,7 @@ async fn main() {
     let app = Router::new()
         .route("/health", get(|| async { "Up and running..." }))
         .route("/register", post(register_endpoint_controller))
+        .route("/info", get(list_all_registrations_controller))
         .with_state(app_state);
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.unwrap();

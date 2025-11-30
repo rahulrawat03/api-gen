@@ -9,7 +9,7 @@ use serde_json::Value;
 use tokio::{net::TcpListener, task::JoinHandle};
 
 use crate::{
-    app_state::AppState,
+    business::app_state::AppState,
     model::{http_method::HttpMethod, request::registration_request::RegistrationRequest},
 };
 
@@ -87,5 +87,19 @@ impl Server {
 
     pub fn stop(&self) {
         self.connection.abort();
+    }
+
+    pub fn get_registration_info(&self) -> Vec<String> {
+        let mut registrations = vec![];
+
+        for (identifier, _) in &self.data {
+            registrations.push(format!(
+                "[{}] {}",
+                identifier.method.to_string(),
+                &identifier.path
+            ));
+        }
+
+        registrations
     }
 }

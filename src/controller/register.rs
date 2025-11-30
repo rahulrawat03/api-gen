@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::{Json, extract::State, http::StatusCode};
 
 use crate::{
-    app_state::AppState, business::server::Server,
+    business::{app_state::AppState, server::Server},
     model::request::registration_request::RegistrationRequest,
 };
 
