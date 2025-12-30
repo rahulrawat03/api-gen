@@ -3,22 +3,29 @@ use std::{collections::HashMap, sync::RwLock};
 use tracing::info;
 
 use crate::{
-    business::server::Server,
+    business::server::{Server, ServerFactory},
+    model::request::registration_request::RegistrationRequest,
     util::lock::{safe_read, safe_write},
 };
 
-pub struct AppState {
-    servers: RwLock<HashMap<String, Server>>,
+pub struct AppState<S: Server, T: ServerFactory<S>> {
+    servers: RwLock<HashMap<String, S>>,
+    _server_factory: T,
 }
 
-impl AppState {
-    pub fn new() -> Self {
+impl<S: Server, T: ServerFactory<S>> AppState<S, T> {
+    pub fn new(server_factory: T) -> Self {
         Self {
             servers: RwLock::new(HashMap::new()),
+            _server_factory: server_factory,
         }
     }
 
-    pub fn add_server(&self, port: &str, server: Server) {
+    pub fn create_server(&self, registration_request: RegistrationRequest) -> S {
+        T::create(self, registration_request)
+    }
+
+    pub fn add_server(&self, port: &str, server: S) {
         info!("Adding server at port {}.", port);
 
         safe_write(&self.servers, |mut guard| {
@@ -26,12 +33,12 @@ impl AppState {
         });
     }
 
-    pub fn remove_server(&self, port: &str) -> Option<Server> {
+    pub fn remove_server(&self, port: &str) -> Option<S> {
         info!("Removing server at port {}.", port);
 
         let server = safe_write(&self.servers, |mut guard| {
             guard.remove(port).map(|server| {
-                server.stop();
+                server.disconnect();
                 server
             })
         });
