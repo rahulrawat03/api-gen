@@ -59,7 +59,7 @@ impl RequestSender for Router {
             .method(method.to_string().as_str())
             .header("Content-Type", "application/json")
             .body(body)
-            .unwrap()
+            .expect("Failed to build request!")
     }
 }
 
