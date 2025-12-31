@@ -6,9 +6,13 @@ use axum::{
 };
 
 use crate::{
-    business::{app_state::AppState, server::default_server::DefaultServerFactory},
+    business::{
+        app_state::AppState,
+        server::connection_establisher::ConnectionEstablisher,
+    },
     controller::{
-        register::register_endpoint_controller, registrations::list_all_registrations_controller,
+        register::register_endpoint_controller,
+        registrations::list_all_registrations_controller,
     },
     logging::http_trace::HttpTracingMiddleware,
 };
@@ -19,10 +23,10 @@ pub mod logging;
 pub mod model;
 pub mod util;
 
-pub fn app(port: &str) -> Router {
-    let default_server_factory = DefaultServerFactory::default();
-    let app_state = Arc::new(AppState::new(default_server_factory));
-
+pub fn app<T: ConnectionEstablisher + Send + Sync + 'static>(
+    port: &str,
+    app_state: Arc<AppState<T>>,
+) -> Router {
     Router::new()
         .route("/health", get(|| async { "Up and running..." }))
         .route("/register", post(register_endpoint_controller))

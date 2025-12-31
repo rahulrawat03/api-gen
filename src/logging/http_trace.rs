@@ -21,13 +21,15 @@ impl HttpTracingMiddleware for Router<()> {
                     request.uri()
                 )
             })
-            .on_response(|response: &Response<Body>, latency: Duration, _: &Span| {
-                info!(
-                    "[Response]: {} ({}ms).",
-                    response.status(),
-                    latency.as_millis(),
-                )
-            });
+            .on_response(
+                |response: &Response<Body>, latency: Duration, _: &Span| {
+                    info!(
+                        "[Response]: {} ({}ms).",
+                        response.status(),
+                        latency.as_millis(),
+                    )
+                },
+            );
 
         self.layer(trace_layer)
     }

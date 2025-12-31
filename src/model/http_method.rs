@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize, de::Error};
 
-#[derive(Serialize, PartialEq, Eq, Hash)]
+#[derive(Serialize, PartialEq, Eq, Hash, Clone)]
 pub enum HttpMethod {
     Get,
     Post,

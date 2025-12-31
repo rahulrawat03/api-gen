@@ -16,7 +16,10 @@ where
 {
     type Rejection = (StatusCode, Error);
 
-    async fn from_request(request: Request, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(
+        request: Request,
+        state: &S,
+    ) -> Result<Self, Self::Rejection> {
         let method = request.method().to_string();
         let uri = request.uri().to_string();
 

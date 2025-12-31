@@ -1,28 +1,16 @@
-use crate::{
-    business::app_state::AppState,
-    model::{http_method::HttpMethod, request::registration_request::RegistrationRequest},
-};
+use crate::model::http_method::HttpMethod;
 
-pub mod default_server;
+pub mod connection_establisher;
+pub mod server;
 
 #[derive(PartialEq, Eq, Hash)]
 struct RequestIdentifier {
-    path: String,
-    method: HttpMethod,
+    pub path: String,
+    pub method: HttpMethod,
 }
 
 impl RequestIdentifier {
     fn new(path: String, method: HttpMethod) -> Self {
         Self { path, method }
     }
-}
-
-pub trait Server {
-    fn disconnect(&self);
-
-    fn get_registration_info(&self) -> Vec<String>;
-}
-
-pub trait ServerFactory<S: Server>: Sized {
-    fn create(app_state: &AppState<S, Self>, registration_request: RegistrationRequest) -> S;
 }
