@@ -14,20 +14,17 @@ impl HttpTracingMiddleware for Router<()> {
         let trace_layer = TraceLayer::new_for_http()
             .make_span_with(|_: &Request<Body>| info_span!("[HTTP]"))
             .on_request(move |request: &Request<Body>, _: &Span| {
-                info!(
-                    "[Request]: [{} (@{})]: {}.",
-                    request.method(),
-                    port,
-                    request.uri()
-                )
+                let method = request.method();
+                let path = request.uri();
+
+                info!(%port, %method, %path, "[Request]: [{method} (@{port})]: {path}.");
             })
             .on_response(
                 |response: &Response<Body>, latency: Duration, _: &Span| {
-                    info!(
-                        "[Response]: {} ({}ms).",
-                        response.status(),
-                        latency.as_millis(),
-                    )
+                    let status = response.status();
+                    let latency = latency.as_millis();
+
+                    info!(%status, %latency, "[Response]: {status} ({latency}ms).");
                 },
             );
 

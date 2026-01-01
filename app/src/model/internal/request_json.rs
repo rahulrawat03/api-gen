@@ -28,10 +28,8 @@ where
             Err(rejection) => {
                 let error_message = rejection.body_text();
                 error!(
-                    "Unexpected JSON received in body for [{}]({}), {}",
-                    method.to_string(),
-                    uri.to_string(),
-                    error_message.clone(),
+                    %method, %uri, %error_message,
+                    "Unexpected JSON received in body for [{method}]({uri}), {error_message}",
                 );
 
                 let error = Error::JsonParse(error_message);

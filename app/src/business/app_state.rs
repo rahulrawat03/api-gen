@@ -29,13 +29,13 @@ impl<T: ConnectionEstablisher> AppState<T> {
         port: String,
         router: Router,
     ) -> JoinHandle<()> {
-        info!("Establishing connection on port {}.", &port);
+        info!(%port, "Establishing connection on port {port}.");
 
         self.connection_establisher.connect(port, router)
     }
 
     pub fn add_server(&self, port: &str, server: Server) {
-        info!("Adding server at port {}.", port);
+        info!(%port, "Adding server at port {port}.");
 
         safe_write(&self.servers, |mut guard| {
             guard.insert(port.to_string(), server);
@@ -43,7 +43,7 @@ impl<T: ConnectionEstablisher> AppState<T> {
     }
 
     pub fn remove_server(&self, port: &str) -> Option<Server> {
-        info!("Removing server at port {}.", port);
+        info!(%port, "Removing server at port {port}.");
 
         let server = safe_write(&self.servers, |mut guard| {
             guard.remove(port).map(|server| {

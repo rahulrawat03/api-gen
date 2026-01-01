@@ -1,6 +1,8 @@
+use std::fmt::{self};
+
 use serde::{Deserialize, Serialize, de::Error};
 
-#[derive(Serialize, PartialEq, Eq, Hash, Clone)]
+#[derive(Serialize, PartialEq, Eq, Hash, Clone, Debug)]
 pub enum HttpMethod {
     Get,
     Post,
@@ -33,6 +35,15 @@ impl<'de> Deserialize<'de> for HttpMethod {
         };
 
         Ok(method)
+    }
+}
+
+impl fmt::Display for HttpMethod {
+    fn fmt(
+        &self,
+        formatter: &mut fmt::Formatter<'_>,
+    ) -> Result<(), fmt::Error> {
+        formatter.write_str(&self.to_string())
     }
 }
 

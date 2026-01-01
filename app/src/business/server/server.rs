@@ -33,19 +33,14 @@ impl Server {
         app_state: &AppState<T>,
         registration_request: RegistrationRequest,
     ) -> Server {
-        info!(
-            "Registering route [{} (@{})] {}.",
-            registration_request.method.to_string(),
-            &registration_request.port,
-            &registration_request.path,
-        );
-
         let RegistrationRequest {
             port,
-            path,
             method,
+            path,
             response,
         } = registration_request;
+
+        info!(%port, %method, %path, "Registering route [{method} (@{port})] {path}.");
 
         let request_identifier =
             RequestIdentifier::new(path.to_string(), method);
@@ -103,10 +98,9 @@ impl Server {
     }
 
     pub fn get_registration_info(&self) -> Vec<String> {
-        info!(
-            "Collection information about registrations at server on port {}.",
-            &self.port
-        );
+        let port = &self.port;
+
+        info!(%port, "Collection information about registrations at server on port {port}.");
 
         let mut registrations = vec![];
 

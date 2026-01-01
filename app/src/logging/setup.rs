@@ -1,7 +1,7 @@
 use std::env;
 
 const LOG_LEVEL_ENV_VAR: &str = "RUST_LOG";
-const DEFAULT_LOG_LEVEL: &str = "INFO";
+const DEFAULT_LOG_LEVEL: &str = "TRACE";
 
 fn configure_log_level() {
     if let Err(_) = env::var(LOG_LEVEL_ENV_VAR) {
