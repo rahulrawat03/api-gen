@@ -1,8 +1,5 @@
 use crate::model::response::http_response::HttpResponse;
-use axum::{
-    Json,
-    response::{IntoResponse, Response},
-};
+use axum::response::{IntoResponse, Response};
 use http::StatusCode;
 use serde_json::{Value, json};
 
@@ -15,7 +12,7 @@ impl IntoResponse for Error {
         let http_response = match self {
             Self::JsonParse(error_message) => {
                 let data = Error::json("MalformedJson", &error_message);
-                HttpResponse::new(StatusCode::OK, Json(data))
+                HttpResponse::new(StatusCode::OK, data)
             }
         };
 

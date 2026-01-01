@@ -1,8 +1,11 @@
 use std::{env::consts, process::Command};
 
-use crate::task::{
-    executable::Executable, exit_status::StringifiedExitCode,
-    util::get_project_root,
+use crate::{
+    arguments::Arguments,
+    task::{
+        executable::Executable, exit_status::StringifiedExitCode,
+        util::get_project_root,
+    },
 };
 
 pub enum InstallCodeCoverageUtilityTask {
@@ -12,10 +15,10 @@ pub enum InstallCodeCoverageUtilityTask {
 }
 
 impl Executable for InstallCodeCoverageUtilityTask {
-    fn execute(&self) {
+    fn execute(&self, arguments: &Arguments) {
         match self {
-            Self::MacOs(mac_os) => mac_os.execute(),
-            Self::Other(other) => other.execute(),
+            Self::MacOs(mac_os) => mac_os.execute(arguments),
+            Self::Other(other) => other.execute(arguments),
         }
     }
 }
@@ -36,7 +39,7 @@ impl InstallCodeCoverageUtilityTask {
 pub struct MacOs;
 
 impl Executable for MacOs {
-    fn execute(&self) {
+    fn execute(&self, _arguments: &Arguments) {
         MacOs::install_lcov();
         MacOs::install_cargo_llvm_lcov();
     }
@@ -122,7 +125,7 @@ pub struct Other {
 }
 
 impl Executable for Other {
-    fn execute(&self) {
+    fn execute(&self, _arguments: &Arguments) {
         println!(
             "[TASK: {}]: Installation task not implemented for {}.",
             InstallCodeCoverageUtilityTask::TASK_NAME,

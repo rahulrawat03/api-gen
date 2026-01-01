@@ -2,13 +2,22 @@ use std::fmt::{self};
 
 use serde::{Deserialize, Serialize, de::Error};
 
-#[derive(Serialize, PartialEq, Eq, Hash, Clone, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub enum HttpMethod {
     Get,
     Post,
     Put,
     Patch,
     Delete,
+}
+
+impl Serialize for HttpMethod {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.to_string().serialize(serializer)
+    }
 }
 
 impl<'de> Deserialize<'de> for HttpMethod {

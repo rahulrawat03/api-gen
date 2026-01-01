@@ -19,6 +19,7 @@ use crate::{
     model::{
         http_method::HttpMethod,
         request::registration_request::RegistrationRequest,
+        response::server_registration::{Registration, ServerRegistration},
     },
 };
 
@@ -97,21 +98,21 @@ impl Server {
         self.connection.abort();
     }
 
-    pub fn get_registration_info(&self) -> Vec<String> {
+    pub fn get_registration_info(&self) -> ServerRegistration {
         let port = &self.port;
 
         info!(%port, "Collection information about registrations at server on port {port}.");
 
         let mut registrations = vec![];
 
-        for (identifier, _) in &self.data {
-            registrations.push(format!(
-                "[{}] {}",
-                identifier.method.to_string(),
-                &identifier.path
+        for (identifier, response) in &self.data {
+            registrations.push(Registration::new(
+                identifier.method.clone(),
+                identifier.path.clone(),
+                response.clone(),
             ));
         }
 
-        registrations
+        ServerRegistration::new(port.clone(), registrations)
     }
 }

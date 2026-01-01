@@ -1,8 +1,11 @@
-use crate::task::{
-    executable::Executable,
-    tasks::{
-        generate_code_coverage::GenerateCodeCoverageTask,
-        install_code_coverage_utility::InstallCodeCoverageUtilityTask,
+use crate::{
+    arguments::Arguments,
+    task::{
+        executable::Executable,
+        tasks::{
+            generate_code_coverage::GenerateCodeCoverageTask,
+            install_code_coverage_utility::InstallCodeCoverageUtilityTask,
+        },
     },
 };
 
@@ -17,10 +20,10 @@ pub enum Task {
 }
 
 impl Executable for Task {
-    fn execute(&self) {
+    fn execute(&self, arguments: &Arguments) {
         match self {
-            Self::GenerateCodeCoverage(task) => task.execute(),
-            Self::InstallCodeCoverageUtility(task) => task.execute(),
+            Self::GenerateCodeCoverage(task) => task.execute(arguments),
+            Self::InstallCodeCoverageUtility(task) => task.execute(arguments),
         }
     }
 }

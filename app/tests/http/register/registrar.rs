@@ -7,7 +7,7 @@ use crate::http::request_sender::RequestSender;
 
 const REGISTER_ENDPOINT: &'static str = "/register";
 
-pub(super) trait Registrar {
+pub(crate) trait Registrar {
     fn register<F>(
         &mut self,
         registration_request: Value,

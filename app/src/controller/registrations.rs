@@ -1,18 +1,25 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
-use axum::{Json, extract::State};
+use axum::extract::State;
+use http::StatusCode;
 use tracing::info_span;
 
-use crate::business::{
-    app_state::AppState, server::connection_establisher::ConnectionEstablisher,
+use crate::{
+    business::{
+        app_state::AppState,
+        server::connection_establisher::ConnectionEstablisher,
+    },
+    model::response::{
+        http_response::HttpResponse, server_registration::ServerRegistration,
+    },
 };
 
 pub async fn list_all_registrations_controller<T: ConnectionEstablisher>(
     State(app_state): State<Arc<AppState<T>>>,
-) -> Json<HashMap<String, Vec<String>>> {
+) -> HttpResponse<Vec<ServerRegistration>> {
     let _entered = info_span!("[Controller: List All Registrations]").entered();
 
     let registrations = app_state.get_registration_info();
 
-    Json(registrations)
+    HttpResponse::new(StatusCode::OK, registrations)
 }

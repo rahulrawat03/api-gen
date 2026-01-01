@@ -8,6 +8,7 @@ use crate::{
     business::server::{
         connection_establisher::ConnectionEstablisher, server::Server,
     },
+    model::response::server_registration::ServerRegistration,
     util::lock::{safe_read, safe_write},
 };
 
@@ -55,18 +56,16 @@ impl<T: ConnectionEstablisher> AppState<T> {
         server.and_then(|server| server)
     }
 
-    pub fn get_registration_info(&self) -> HashMap<String, Vec<String>> {
+    pub fn get_registration_info(&self) -> Vec<ServerRegistration> {
         info!("Collecting information about all registrations.");
 
         let registrations = safe_read(&self.servers, |guard| {
             guard
                 .iter()
-                .map(|(port, server)| {
-                    (port.to_string(), server.get_registration_info())
-                })
-                .collect::<HashMap<_, _>>()
+                .map(|(_, server)| server.get_registration_info())
+                .collect::<Vec<_>>()
         });
 
-        registrations.unwrap_or(HashMap::new())
+        registrations.unwrap_or(vec![])
     }
 }

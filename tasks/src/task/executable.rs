@@ -1,3 +1,5 @@
+use crate::arguments::Arguments;
+
 pub trait Executable {
-    fn execute(&self);
+    fn execute(&self, arguments: &Arguments);
 }
