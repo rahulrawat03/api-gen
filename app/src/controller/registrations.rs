@@ -21,5 +21,5 @@ pub async fn list_all_registrations_controller<T: ConnectionEstablisher>(
 
     let registrations = app_state.get_registration_info();
 
-    HttpResponse::new(StatusCode::OK, registrations)
+    HttpResponse::success(StatusCode::OK, registrations)
 }

@@ -32,8 +32,7 @@ where
                     "Unexpected JSON received in body for [{method}]({uri}), {error_message}",
                 );
 
-                let error = Error::JsonParse(error_message);
-                Err((StatusCode::BAD_REQUEST, error))
+                Err((StatusCode::BAD_REQUEST, Error::JsonParse(error_message)))
             }
         }
     }

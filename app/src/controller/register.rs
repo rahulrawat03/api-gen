@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{extract::State, http::StatusCode};
-use tracing::info_span;
+use tracing::{Instrument, info_span};
 
 use crate::{
     business::{
@@ -21,12 +21,21 @@ pub async fn register_endpoint_controller<T: ConnectionEstablisher>(
     State(app_state): State<Arc<AppState<T>>>,
     RequestJson(registration_request): RequestJson<RegistrationRequest>,
 ) -> HttpResponse<()> {
-    let _entered = info_span!("[Controller: Register Endpoint]").entered();
+    let span = info_span!("[Controller: Register Endpoint]");
 
-    let port = registration_request.port.to_string();
+    async move {
+        let port = registration_request.port.to_string();
 
-    let server = Server::create(&app_state, registration_request);
-    app_state.add_server(&port, server);
+        let server = Server::create(&app_state, registration_request).await;
 
-    HttpResponse::new(StatusCode::OK, ())
+        match server {
+            Ok(server) => {
+                app_state.add_server(&port, server);
+                HttpResponse::success(StatusCode::OK, ())
+            }
+            Err(err) => HttpResponse::failure(StatusCode::BAD_REQUEST, err),
+        }
+    }
+    .instrument(span)
+    .await
 }

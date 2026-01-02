@@ -5,22 +5,32 @@ use axum::{
 use http::StatusCode;
 use serde::Serialize;
 
-pub struct HttpResponse<T: Serialize> {
-    status_code: StatusCode,
-    data: Json<T>,
+use crate::model::error::Error;
+
+pub enum HttpResponse<T: Serialize> {
+    Success(StatusCode, Json<T>),
+    Failure(StatusCode, Error),
 }
 
 impl<T: Serialize> HttpResponse<T> {
-    pub fn new(status_code: StatusCode, data: T) -> Self {
-        Self {
-            status_code,
-            data: Json(data),
-        }
+    pub fn success(status_code: StatusCode, data: T) -> Self {
+        Self::Success(status_code, Json(data))
+    }
+
+    pub fn failure(status_code: StatusCode, error: Error) -> Self {
+        Self::Failure(status_code, error)
     }
 }
 
 impl<T: Serialize> IntoResponse for HttpResponse<T> {
     fn into_response(self) -> Response {
-        (self.status_code, self.data).into_response()
+        match self {
+            Self::Success(status_code, json) => {
+                (status_code, json).into_response()
+            }
+            Self::Failure(status_code, error) => {
+                (status_code, error).into_response()
+            }
+        }
     }
 }

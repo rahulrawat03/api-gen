@@ -5,6 +5,7 @@ use std::{
 
 use api_gen::{
     business::server::connection_establisher::ConnectionEstablisher,
+    model::error::Error,
     util::lock::{safe_read, safe_write},
 };
 use axum::Router;
@@ -31,12 +32,16 @@ impl FakeConnectionEstablisher {
 }
 
 impl ConnectionEstablisher for FakeConnectionEstablisher {
-    fn connect(&self, port: String, router: Router) -> JoinHandle<()> {
+    async fn connect(
+        &self,
+        port: String,
+        router: Router,
+    ) -> Result<JoinHandle<()>, Error> {
         safe_write(&self.routers, |mut guard| {
             guard.insert(port, router);
         });
 
-        tokio::spawn(async move {})
+        Ok(tokio::spawn(async move {}))
     }
 }
 

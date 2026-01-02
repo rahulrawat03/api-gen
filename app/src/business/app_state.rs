@@ -8,7 +8,7 @@ use crate::{
     business::server::{
         connection_establisher::ConnectionEstablisher, server::Server,
     },
-    model::response::server_registration::ServerRegistration,
+    model::{error::Error, response::server_registration::ServerRegistration},
     util::lock::{safe_read, safe_write},
 };
 
@@ -25,14 +25,14 @@ impl<T: ConnectionEstablisher> AppState<T> {
         }
     }
 
-    pub fn create_connection(
+    pub async fn create_connection(
         &self,
         port: String,
         router: Router,
-    ) -> JoinHandle<()> {
+    ) -> Result<JoinHandle<()>, Error> {
         info!(%port, "Establishing connection on port {port}.");
 
-        self.connection_establisher.connect(port, router)
+        self.connection_establisher.connect(port, router).await
     }
 
     pub fn add_server(&self, port: &str, server: Server) {

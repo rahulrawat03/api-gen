@@ -17,6 +17,7 @@ use crate::{
     },
     logging::http_trace::HttpTracingMiddleware,
     model::{
+        error::Error,
         http_method::HttpMethod,
         request::registration_request::RegistrationRequest,
         response::server_registration::{Registration, ServerRegistration},
@@ -30,17 +31,15 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn create<T: ConnectionEstablisher>(
+    pub async fn create<T: ConnectionEstablisher>(
         app_state: &AppState<T>,
-        registration_request: RegistrationRequest,
-    ) -> Server {
-        let RegistrationRequest {
+        RegistrationRequest {
             port,
             method,
             path,
             response,
-        } = registration_request;
-
+        }: RegistrationRequest,
+    ) -> Result<Server, Error> {
         info!(%port, %method, %path, "Registering route [{method} (@{port})] {path}.");
 
         let request_identifier =
@@ -53,22 +52,22 @@ impl Server {
         data.insert(request_identifier, response);
 
         let connection =
-            Server::create_connection(app_state, port.clone(), &data);
+            Server::create_connection(app_state, port.clone(), &data).await?;
 
-        Server {
+        Ok(Server {
             connection,
             port,
             data,
-        }
+        })
     }
 
-    fn create_connection<T: ConnectionEstablisher>(
+    async fn create_connection<T: ConnectionEstablisher>(
         app_state: &AppState<T>,
         port: String,
         data: &HashMap<RequestIdentifier, Value>,
-    ) -> JoinHandle<()> {
+    ) -> Result<JoinHandle<()>, Error> {
         let router = Server::create_router(port.clone(), data);
-        app_state.create_connection(port, router)
+        app_state.create_connection(port, router).await
     }
 
     fn create_router(
