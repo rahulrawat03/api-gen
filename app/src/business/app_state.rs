@@ -1,14 +1,12 @@
 use std::{collections::HashMap, sync::RwLock};
 
-use axum::Router;
-use tokio::task::JoinHandle;
 use tracing::info;
 
 use crate::{
     business::server::{
         connection_establisher::ConnectionEstablisher, server::Server,
     },
-    model::{error::Error, response::server_registration::ServerRegistration},
+    model::internal::server_registration::ServerRegistration,
     util::lock::{safe_read, safe_write},
 };
 
@@ -25,14 +23,8 @@ impl<T: ConnectionEstablisher> AppState<T> {
         }
     }
 
-    pub async fn create_connection(
-        &self,
-        port: String,
-        router: Router,
-    ) -> Result<JoinHandle<()>, Error> {
-        info!(%port, "Establishing connection on port {port}.");
-
-        self.connection_establisher.connect(port, router).await
+    pub fn get_connection_establisher(&self) -> &T {
+        &self.connection_establisher
     }
 
     pub fn add_server(&self, port: &str, server: Server) {
@@ -48,7 +40,7 @@ impl<T: ConnectionEstablisher> AppState<T> {
 
         let server = safe_write(&self.servers, |mut guard| {
             guard.remove(port).map(|server| {
-                server.disconnect();
+                server.stop();
                 server
             })
         });
@@ -56,13 +48,13 @@ impl<T: ConnectionEstablisher> AppState<T> {
         server.and_then(|server| server)
     }
 
-    pub fn get_registration_info(&self) -> Vec<ServerRegistration> {
+    pub fn get_registrations(&self) -> Vec<ServerRegistration> {
         info!("Collecting information about all registrations.");
 
         let registrations = safe_read(&self.servers, |guard| {
             guard
                 .iter()
-                .map(|(_, server)| server.get_registration_info())
+                .map(|(_, server)| server.get_registrations())
                 .collect::<Vec<_>>()
         });
 

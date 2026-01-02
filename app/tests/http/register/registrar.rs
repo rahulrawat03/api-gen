@@ -22,7 +22,7 @@ pub(crate) trait Registrar {
         assertion: F,
     ) -> impl Future<Output = ()>
     where
-        F: Fn(StatusCode, Value) -> ();
+        F: Fn(usize, StatusCode, Value) -> ();
 }
 
 impl Registrar for Router {
@@ -46,11 +46,14 @@ impl Registrar for Router {
         registration_request: Value,
         assertion: F,
     ) where
-        F: Fn(StatusCode, Value) -> (),
+        F: Fn(usize, StatusCode, Value) -> (),
     {
         if let Value::Array(requests) = registration_request {
-            for request in requests {
-                self.register(request, &assertion).await;
+            for (idx, request) in requests.into_iter().enumerate() {
+                self.register(request, |status_code, response_body| {
+                    assertion(idx, status_code, response_body)
+                })
+                .await;
             }
         } else {
             panic!("`register_many` only accepts a list of requests!");

@@ -1,6 +1,6 @@
 use api_gen::model::{
     http_method::HttpMethod,
-    response::server_registration::{Registration, ServerRegistration},
+    internal::server_registration::{Registration, ServerRegistration},
 };
 use serde_json::Value;
 

@@ -3,7 +3,7 @@ use serde_json::Value;
 
 use crate::model::http_method::HttpMethod;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct RegistrationRequest {
     pub port: String,
     pub path: String,

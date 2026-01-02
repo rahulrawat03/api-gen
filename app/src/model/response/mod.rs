@@ -1,2 +1,2 @@
 pub mod http_response;
-pub mod server_registration;
+pub mod registration_response;

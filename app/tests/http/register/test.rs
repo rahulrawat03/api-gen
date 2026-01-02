@@ -16,8 +16,19 @@ async fn should_succeed_for_valid_payload() {
                 "path": "/hello",
                 "response": "Hello World!"
             }),
-            |status_code, _| {
+            |status_code, registration_response| {
                 assert_eq!(StatusCode::OK, status_code);
+                assert_eq!(
+                    json!({
+                        "added": {
+                            "method": "GET",
+                            "path": "/hello",
+                            "response": "Hello World!",
+                        },
+                        "removed": null
+                    }),
+                    registration_response
+                );
             },
         )
         .await;
@@ -35,8 +46,19 @@ async fn should_accept_http_method_in_case_insensitive_fashion() {
                 "path": "/hello",
                 "response": "Hello World!",
             }),
-            |status_code, _| {
+            |status_code, registration_response| {
                 assert_eq!(StatusCode::OK, status_code);
+                assert_eq!(
+                    json!({
+                        "added": {
+                            "method": "POST",
+                            "path": "/hello",
+                            "response": "Hello World!",
+                        },
+                        "removed": null
+                    }),
+                    registration_response
+                );
             },
         )
         .await;
@@ -107,9 +129,9 @@ async fn should_fail_for_missing_attributes() {
     router
         .register(
             json!({
-                        "port": "3000",
-                        "path": "/hello",
-                        "method": "GET",
+                "port": "3000",
+                "path": "/hello",
+                "method": "GET",
             }),
             |status_code, _| {
                 assert_eq!(StatusCode::BAD_REQUEST, status_code);
@@ -130,8 +152,19 @@ async fn should_respond_at_registered_endpoint() {
                 "path": "/hello",
                 "response": "Hello World!",
             }),
-            |status_code, _| {
+            |status_code, registration_response| {
                 assert_eq!(StatusCode::OK, status_code);
+                assert_eq!(
+                    json!({
+                        "added": {
+                            "method": "GET",
+                            "path": "/hello",
+                            "response": "Hello World!",
+                        },
+                        "removed": null
+                    }),
+                    registration_response
+                );
             },
         )
         .await;
@@ -170,8 +203,38 @@ async fn should_override_registered_response_with_new_one() {
                     "response": "Hello World!!!"
                 },
             ]),
-            |status_code, _| {
+            |idx, status_code, registration_response| {
                 assert_eq!(StatusCode::OK, status_code);
+
+                if idx == 0 {
+                    assert_eq!(
+                        json!({
+                            "added": {
+                                "method": "GET",
+                                "path": "/hello",
+                                "response": "Hello World!",
+                            },
+                            "removed": null,
+                        }),
+                        registration_response
+                    );
+                } else if idx == 1 {
+                    assert_eq!(
+                        json!({
+                            "added": {
+                                "method": "GET",
+                                "path": "/hello",
+                                "response": "Hello World!!!",
+                            },
+                            "removed": {
+                                "method": "GET",
+                                "path": "/hello",
+                                "response": "Hello World!"
+                            },
+                        }),
+                        registration_response
+                    );
+                }
             },
         )
         .await;
@@ -217,7 +280,7 @@ async fn should_handle_different_ports_independently() {
                     "response": "[3002: GET](/hello) Hello World!"
                 },
             ]),
-            |status_code, _| {
+            |_, status_code, _| {
                 assert_eq!(StatusCode::OK, status_code);
             },
         )
@@ -305,7 +368,7 @@ async fn should_handle_different_methods_independently() {
                     "response": "[3000: DELETE](/hello) Hello World!"
                 },
             ]),
-            |status_code, _| {
+            |_, status_code, _| {
                 assert_eq!(StatusCode::OK, status_code);
             },
         )
@@ -406,7 +469,7 @@ async fn should_handle_different_paths_differently() {
                     "response": "[3000: GET](/hello3) Hello World!"
                 },
             ]),
-            |status_code, _| {
+            |_, status_code, _| {
                 assert_eq!(StatusCode::OK, status_code);
             },
         )

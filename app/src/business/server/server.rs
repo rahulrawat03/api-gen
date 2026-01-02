@@ -9,50 +9,52 @@ use tokio::task::JoinHandle;
 use tracing::info;
 
 use crate::{
-    business::{
-        app_state::AppState,
-        server::{
-            RequestIdentifier, connection_establisher::ConnectionEstablisher,
-        },
+    business::server::{
+        RegistrationIdentifier, connection_establisher::ConnectionEstablisher,
+        restartable::Restartable,
     },
     logging::http_trace::HttpTracingMiddleware,
     model::{
         error::Error,
         http_method::HttpMethod,
+        internal::server_registration::{Registration, ServerRegistration},
         request::registration_request::RegistrationRequest,
-        response::server_registration::{Registration, ServerRegistration},
     },
 };
 
 pub struct Server {
     connection: JoinHandle<()>,
     port: String,
-    data: HashMap<RequestIdentifier, Value>,
+    data: HashMap<RegistrationIdentifier, Value>,
 }
 
 impl Server {
-    pub async fn create<T: ConnectionEstablisher>(
-        app_state: &AppState<T>,
+    async fn restart<T, F>(
+        connection_establisher: &T,
         RegistrationRequest {
             port,
             method,
             path,
             response,
         }: RegistrationRequest,
-    ) -> Result<Server, Error> {
+        data_producer: F,
+    ) -> Result<Self, Error>
+    where
+        T: ConnectionEstablisher,
+        F: FnOnce(
+            RegistrationIdentifier,
+            Value,
+        ) -> HashMap<RegistrationIdentifier, Value>,
+    {
         info!(%port, %method, %path, "Registering route [{method} (@{port})] {path}.");
 
-        let request_identifier =
-            RequestIdentifier::new(path.to_string(), method);
+        let registration_identifier =
+            RegistrationIdentifier::new(path.to_string(), method.clone());
 
-        let mut data = app_state
-            .remove_server(&port)
-            .map(|server| server.data)
-            .unwrap_or(HashMap::new());
-        data.insert(request_identifier, response);
-
+        let data = data_producer(registration_identifier, response);
+        let router = Server::create_router(port.clone(), &data);
         let connection =
-            Server::create_connection(app_state, port.clone(), &data).await?;
+            connection_establisher.connect(port.clone(), router).await?;
 
         Ok(Server {
             connection,
@@ -61,18 +63,9 @@ impl Server {
         })
     }
 
-    async fn create_connection<T: ConnectionEstablisher>(
-        app_state: &AppState<T>,
-        port: String,
-        data: &HashMap<RequestIdentifier, Value>,
-    ) -> Result<JoinHandle<()>, Error> {
-        let router = Server::create_router(port.clone(), data);
-        app_state.create_connection(port, router).await
-    }
-
     fn create_router(
         port: String,
-        data: &HashMap<RequestIdentifier, Value>,
+        data: &HashMap<RegistrationIdentifier, Value>,
     ) -> Router {
         let mut router = Router::new();
 
@@ -93,11 +86,27 @@ impl Server {
         router.with_http_tracing(port)
     }
 
-    pub fn disconnect(&self) {
+    pub fn stop(&self) {
         self.connection.abort();
     }
 
-    pub fn get_registration_info(&self) -> ServerRegistration {
+    pub fn get_registration(
+        &self,
+        path: String,
+        method: HttpMethod,
+    ) -> Option<Registration> {
+        let registration_identifier =
+            RegistrationIdentifier::new(path.clone(), method.clone());
+        let response =
+            self.data.get(&registration_identifier).map(|r| r.clone());
+
+        match response {
+            Some(response) => Some(Registration::new(method, path, response)),
+            None => None,
+        }
+    }
+
+    pub fn get_registrations(&self) -> ServerRegistration {
         let port = &self.port;
 
         info!(%port, "Collection information about registrations at server on port {port}.");
@@ -113,5 +122,38 @@ impl Server {
         }
 
         ServerRegistration::new(port.clone(), registrations)
+    }
+}
+
+impl<T: ConnectionEstablisher> Restartable<T> for Option<Server> {
+    type Instance = Result<Server, Error>;
+
+    async fn restart(
+        self,
+        connection_establisher: &T,
+        registration_request: RegistrationRequest,
+    ) -> Self::Instance {
+        let port = &registration_request.port;
+
+        if self.is_some() {
+            info!(%port, "Restarting the server on port {port}.");
+        } else {
+            info!(%port, "Starting a server on port {port}.");
+        }
+
+        let mut data = match self {
+            Some(mut server) => std::mem::take(&mut server.data),
+            None => HashMap::new(),
+        };
+
+        Server::restart(
+            connection_establisher,
+            registration_request,
+            move |registration_identifier, response| {
+                data.insert(registration_identifier, response);
+                data
+            },
+        )
+        .await
     }
 }

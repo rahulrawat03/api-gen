@@ -9,8 +9,9 @@ use crate::{
         app_state::AppState,
         server::connection_establisher::ConnectionEstablisher,
     },
-    model::response::{
-        http_response::HttpResponse, server_registration::ServerRegistration,
+    model::{
+        internal::server_registration::ServerRegistration,
+        response::http_response::HttpResponse,
     },
 };
 
@@ -19,7 +20,7 @@ pub async fn list_all_registrations_controller<T: ConnectionEstablisher>(
 ) -> HttpResponse<Vec<ServerRegistration>> {
     let _entered = info_span!("[Controller: List All Registrations]").entered();
 
-    let registrations = app_state.get_registration_info();
+    let registrations = app_state.get_registrations();
 
     HttpResponse::success(StatusCode::OK, registrations)
 }

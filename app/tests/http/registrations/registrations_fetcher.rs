@@ -1,5 +1,5 @@
 use api_gen::model::{
-    http_method::HttpMethod, response::server_registration::ServerRegistration,
+    http_method::HttpMethod, internal::server_registration::ServerRegistration,
 };
 use axum::Router;
 use http::StatusCode;

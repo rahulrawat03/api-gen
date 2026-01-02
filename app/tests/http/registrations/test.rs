@@ -37,7 +37,7 @@ async fn should_list_all_registrations() {
                     "response": "Hello World!",
                 },
             ]),
-            |_, _| {},
+            |_, _, _| {},
         )
         .await;
 
@@ -104,7 +104,7 @@ async fn should_not_list_overriden_registrations() {
                     "response": "Hello World!",
                 },
             ]),
-            |_, _| {},
+            |_, _, _| {},
         )
         .await;
 
@@ -166,7 +166,7 @@ async fn should_not_list_overriden_registrations() {
                     "response": "Hello World!!!",
                 },
             ]),
-            |_, _| {},
+            |_, _, _| {},
         )
         .await;
 

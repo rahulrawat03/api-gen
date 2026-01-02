@@ -1,15 +1,16 @@
 use crate::model::http_method::HttpMethod;
 
 pub mod connection_establisher;
+pub mod restartable;
 pub mod server;
 
 #[derive(PartialEq, Eq, Hash)]
-struct RequestIdentifier {
+struct RegistrationIdentifier {
     pub path: String,
     pub method: HttpMethod,
 }
 
-impl RequestIdentifier {
+impl RegistrationIdentifier {
     fn new(path: String, method: HttpMethod) -> Self {
         Self { path, method }
     }

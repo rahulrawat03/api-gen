@@ -23,7 +23,7 @@ impl ConnectionEstablisher for TcpConnectionEstablisher {
         port: String,
         router: Router,
     ) -> Result<JoinHandle<()>, Error> {
-        info!(port = port, "Establishing connectio non port {}.", port);
+        info!(port = port, "Establishing connection on port {port}.");
 
         let notifier = Arc::new(Notifier::new());
 
